@@ -115,10 +115,16 @@
 
         function addToLocationQueue()
          {
-            
-                marker_location.setGeometry({lat:location_data[1].latitude, lng:location_data[1].longitude})
-                $('#carDomIcon').css({"transform":"rotate(220deg)"});
+            const isMapAnimated = true;
+
+                marker_location.setPosition({lat:location_data[1].latitude, lng:location_data[1].longitude})
+                
+                let angle_car = location_data[1].angle+160;
+
+                $('#carDomIcon').css({"transform":"rotate("+angle_car+"deg)"});
                 map.addObject(marker_location);
+                map.setCenter({lat:location_data[1].latitude, lng:location_data[1].longitude}, isMapAnimated);
+                map.setZoom(18, isMapAnimated);
                 popFromLocationQueue();
            
          }
