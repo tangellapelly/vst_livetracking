@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Vehicle Live Track</title>
+
+      <meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
+    <link rel="icon" href="assets/img/icon.png" type="image/x-icon" />
+    <!-- Fonts and icons -->
+    
+
+    <script src="assets/Scripts/jquery-3.3.1.js"></script>
+    <script src="assets/Scripts/jquery-3.3.1.min.js"></script>
+    <script src="assets/Scripts/moment.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.0/mapsjs-ui.css?dp-version=1549984893" />
+
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/atlantis.min.css">
+    <link rel="stylesheet" href="assets/css/demo.css">
+
+</head>
+
+
+    <div class="wrapper overlay-sidebar">
+        <div class="main-panel">
+            <div class="content">
+                <!--<div id="markers" style="width:1800px;height:780px"></div>-->
+                <div id="markers" style="width:1360px;height:595px"></div>
+                <div class="page-inner mt--5">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--   Core JS Files   -->
+    <script src="assets/js/core/jquery.3.2.1.min.js"></script>
+    <script src="assets/js/core/popper.min.js"></script>
+    <script src="assets/js/core/bootstrap.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+    <script src="assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+    <!-- jQuery Scrollbar -->
+    <script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+
+
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-core.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-service.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-ui.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-mapevents.js"></script>
+    <script src="assets/js/atlantis.min.js"></script>
+    <!-- Atlantis DEMO methods, don't include it in your project! -->
+     <script src="assets/js/location_data.js"></script>
+  
+    <script>
+    
+
+        var parisMarker = new H.map.Marker({ lat: 10.192656, lng: 76.386666 });
+        var objImg = document.createElement('img');
+        objImg.src = 'assets/img/Car.png';
+        var outerElement = document.createElement('div')
+        var DomCar = new H.map.DomIcon(objImg);
+        var domIcon = new H.map.DomIcon(outerElement);
+        var bearsMarker = new H.map.DomMarker({ lat: 10.192656, lng: 76.386666 }, {
+            icon: domIcon
+        });
+
+        var hidpi = ('devicePixelRatio' in window && devicePixelRatio > 1);
+        var secure = (location.protocol === 'https:') ? true : false; // check if the site was loaded via secure connection
+        var app_id = "vvfyuslVdzP04AK3BlBq",
+            app_code = "f63d__fBLLCuREIGNr6BjQ";
+
+        var mapContainer = document.getElementById('markers');
+        var platform = new H.service.Platform({ app_code: app_code, app_id: app_id, useHTTPS: secure });
+        var maptypes = platform.createDefaultLayers(hidpi ? 512 : 256, hidpi ? 320 : null);
+
+        var map = new H.Map(mapContainer, maptypes.normal.map);
+        map.setCenter({ lat: 10.192656, lng: 76.386666 });
+        map.setZoom(14);
+        var zoomToResult = true;
+        var mapTileService = platform.getMapTileService({
+            type: 'base'
+        });
+        var parameters = {};
+        var uTurn = false;
+
+        new H.mapevents.Behavior(new H.mapevents.MapEvents(map)); // add behavior control
+        var ui = H.ui.UI.createDefault(map, maptypes); // add UI
+        var carIcon = new H.map.Icon('assets/img/Car_1.png');
+        var objImgCar = document.createElement('img');
+        objImgCar.setAttribute("id","carDomIcon")
+        objImgCar.src = 'assets/img/Car.png';
+        
+        var DomCar = new H.map.DomIcon(objImgCar);
+        
+        var domElementFather = document.createElement('div');
+            domElementFather.appendChild(objImgCar);
+        var domIconCar = new H.map.DomIcon(domElementFather, {});
+        
+        
+        var marker_location = new H.map.DomMarker({lat:location_data[1].latitude, lng:location_data[1].longitude},{icon:domIconCar});
+        
+       
+         map.addObject(marker_location);
+         //document.getElementById('#carDomIcon').setAttribute("style","transform:rotate(40deg)")
+         $('#carDomIcon').css({"transform":"rotate("+location_data[1].angle+180+"deg)"});
+         
+            popFromLocationQueue();
+        var locationQueue=[];
+        
+
+        window.setInterval(function(){
+            addToLocationQueue();
+        }, 2000);
+
+
+        function addToLocationQueue()
+         {
+            
+                marker_location.setGeometry({lat:location_data[1].latitude, lng:location_data[1].longitude})
+                $('#carDomIcon').css({"transform":"rotate(220deg)"});
+                map.addObject(marker_location);
+                popFromLocationQueue();
+           
+         }
+
+        function popFromLocationQueue(){
+         if(location_data.length>0)
+         {
+
+
+              return location_data.splice(0,1)[0];    
+         }
+          else
+          return null;
+        }
+
+        function addMarkersToMap(){
+
+        }
+    </script>
+</body>
+</html>
