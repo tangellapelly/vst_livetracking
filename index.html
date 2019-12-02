@@ -51,22 +51,25 @@
 <script src="assets/js/atlantis.min.js"></script>
 <!-- Atlantis DEMO methods, don't include it in your project! -->
 <script src="assets/js/location_data.js"></script>
-
+<script src="assets/js/main.js"></script>
 <script>
-
-
-
     var hidpi = ('devicePixelRatio' in window && devicePixelRatio > 1);
     var secure = (location.protocol === 'https:') ? true : false; // check if the site was loaded via secure connection
     var app_id = "vvfyuslVdzP04AK3BlBq",
         app_code = "f63d__fBLLCuREIGNr6BjQ";
-
     var mapContainer = document.getElementById('markers');
-    var platform = new H.service.Platform({ app_code: app_code, app_id: app_id, useHTTPS: secure });
+    var platform = new H.service.Platform({
+        app_code: app_code,
+        app_id: app_id,
+        useHTTPS: secure
+    });
     var maptypes = platform.createDefaultLayers(hidpi ? 512 : 256, hidpi ? 320 : null);
 
     var map = new H.Map(mapContainer, maptypes.normal.map);
-    map.setCenter({ lat: 10.192656, lng: 76.386666 });
+    map.setCenter({
+        lat: 10.192656,
+        lng: 76.386666
+    });
     map.setZoom(20);
     var zoomToResult = true;
     var mapTileService = platform.getMapTileService({
@@ -74,123 +77,50 @@
     });
     var parameters = {};
     var uTurn = false;
-
     var Behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map)); // add behavior control
-    //var ui = H.ui.UI.createDefault(map, maptypes); // add UI
     var carIcon = new H.map.Icon('assets/img/org.png');
 
-
-    var objImgCar = document.createElement('img');
-    objImgCar.setAttribute("id", "carDomIcon")
-    objImgCar.setAttribute("width", "12")
-    objImgCar.setAttribute("height", "24")
-    objImgCar.src = 'assets/img/Car.png';
-    var DomCar = new H.map.DomIcon(objImgCar);
-
-    var domElementFather = document.createElement('div');
-    domElementFather.appendChild(objImgCar);
-    var domIconCar = new H.map.DomIcon(domElementFather, {});
-
-    var position_latitude = route_matching_data.response.route[0].waypoint[0].mappedPosition.latitude;
-    var position_longitude = route_matching_data.response.route[0].waypoint[0].mappedPosition.longitude;
-
-    var marker_location = new H.map.DomMarker({ lat: position_latitude, lng: position_longitude }, { icon: domIconCar });
-    let group = new H.map.Group();
-    group.addObject(marker_location);
-    map.setZoom(17);
-    //map.setViewBounds(group.getBounds(), true);
-
-    map.addObject(group);
-    //document.getElementById('#carDomIcon').setAttribute("style","transform:rotate(40deg)")
-    // $('#carDomIcon').css({"transform":"rotate("+location_data[1].angle+120+"deg)"});
-
-    popFromLocationQueue();
-
-    window.setInterval(function () {
-        addToLocationQueue();
-    }, 2000);
+    // calling route matching api to aligin the GPS codes
+    async function rme_call(location_data) {
 
 
+        let waypoints = location_data.map((item, index) => {
+            return `waypoint${index}=${item.latitude},${item.longitude}`
+        })
 
-    function addToLocationQueue() {
-        const isMapAnimated = true;
-        var position_latitude = route_matching_data.response.route[0].waypoint[0].originalPosition.latitude;
-        var position_longitude = route_matching_data.response.route[0].waypoint[0].originalPosition.longitude;
-        var position_angle = (route_matching_data.response.route[0].waypoint[0].spot) * 100 - 10;
-        console.log({ lat: position_latitude, lng: position_longitude })
-        var result = [position_longitude, position_angle]
-        moveTo = [position_latitude, position_longitude]
-        console.log(marker_location.getGeometry())
-        customAnimatedMove(marker_location, .5, marker_location.getGeometry().lat, marker_location.getGeometry().lng, moveTo);
-        popFromLocationQueue();
+        // was planning to do a post request, but then I changed my mind
+        // let payload = {}
+        // payload['app_id'] = app_id
+        // payload['app_code'] = app_code
+        // payload['routeMatch'] = 1
+        // payload['mode'] = 'fastest;car;traffic:disabled'
+        // location_data.map(function (item, index) {
+        //     let key = `waypoint${index}`
+        //     payload[key] = `${item.latitude},${item.longitude}`
+        // })
+
+        let waypoints_formated = waypoints.join('&');
+        let rme_url =
+            `https://rme.api.here.com/2/calculateroute.json?&app_id=${app_id}&app_code=${app_code}&routeMatch=${1}&mode=${'fastest;car;traffic:disabled'}&${waypoints_formated}`;
+        // var data = new FormData();
+        // data.append("json", JSON.stringify(payload));
+
+        await fetch(rme_url, {
+                method: "GET"
+            })
+            .then(function (res) {
+                return res.json();
+            })
+            .then(function (data) {
+                //storing the route matching response in global var for ease of access.
+                window.route_matching_data = data;
+                show_tracking()
+            })
     }
 
-
-    function customAnimatedMove(marker, t, current_lat, current_lng, moveto) {
-        let lat = current_lat;
-        let lng = current_lng;
-        let currentLatLng = [current_lat, current_lng];
-
-        let deltalat = (moveto[0] - lat) / 100;
-        let deltalng = (moveto[1] - lng) / 100;
-        let delay = 10 * t;
-        for (let i = 0; i < 100; i++) {
-            (function (ind) {
-                setTimeout(
-                    function () {
-                        let lat = marker.getGeometry().lat;
-                        let lng = marker.getGeometry().lng;
-                        lat += deltalat;
-                        lng += deltalng;
-                        latlng = new H.geo.Point(lat, lng);
-
-                        $('#carDomIcon').css({ "transform": `rotate(+${calCBearing(currentLatLng, moveto)}deg)` });
-                        
-                        marker.setPosition(latlng,true);
-                        map.setCenter(latlng,true);
-                        
-                    }, delay * ind
-                );
-            })(i)
-        }
-    }
-
-    function calCBearing(currentLatLng, movingToLatLng) {
-        
-
-        startLat = toRadians(currentLatLng[0]);
-  startLng = toRadians(currentLatLng[1]);
-  destLat = toRadians(movingToLatLng[0]);
-  destLng = toRadians(movingToLatLng[1]);
-
-        y = Math.sin(destLng - startLng) * Math.cos(destLat);
-        x = Math.cos(startLat) * Math.sin(destLat) -
-            Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
-        brng = Math.atan2(y, x);
-        brng = toDegrees(brng);
-        return (brng + 360) % 360;
-
-    }
-
-    function popFromLocationQueue() {
-        if (route_matching_data.response.route[0].waypoint.length > 0) {
-            route_matching_data.response.route[0].waypoint.shift();
-        } else {
-            return null
-        }
-
-    }
-    // Converts from degrees to radians.
-    function toRadians(degrees) {
-        return degrees * Math.PI / 180;
-    };
-
-    // Converts from radians to degrees.
-    function toDegrees(radians) {
-        return radians * 180 / Math.PI;
-    }
-
+    rme_call(location_data);
 </script>
+
 </body>
 
 </html>
