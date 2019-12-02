@@ -55,6 +55,15 @@
 <script>
 
 
+    var parisMarker = new H.map.Marker({ lat: 10.192656, lng: 76.386666 });
+    var objImg = document.createElement('img');
+    objImg.src = 'assets/img/Car.png';
+    var outerElement = document.createElement('div')
+    var DomCar = new H.map.DomIcon(objImg);
+    var domIcon = new H.map.DomIcon(outerElement);
+    var bearsMarker = new H.map.DomMarker({ lat: 10.192656, lng: 76.386666 }, {
+        icon: domIcon
+    });
 
     var hidpi = ('devicePixelRatio' in window && devicePixelRatio > 1);
     var secure = (location.protocol === 'https:') ? true : false; // check if the site was loaded via secure connection
@@ -67,7 +76,7 @@
 
     var map = new H.Map(mapContainer, maptypes.normal.map);
     map.setCenter({ lat: 10.192656, lng: 76.386666 });
-    map.setZoom(20);
+    map.setZoom(14);
     var zoomToResult = true;
     var mapTileService = platform.getMapTileService({
         type: 'base'
@@ -75,16 +84,13 @@
     var parameters = {};
     var uTurn = false;
 
-    var Behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map)); // add behavior control
-    //var ui = H.ui.UI.createDefault(map, maptypes); // add UI
+    new H.mapevents.Behavior(new H.mapevents.MapEvents(map)); // add behavior control
+    var ui = H.ui.UI.createDefault(map, maptypes); // add UI
     var carIcon = new H.map.Icon('assets/img/org.png');
-
-
     var objImgCar = document.createElement('img');
     objImgCar.setAttribute("id", "carDomIcon")
-    objImgCar.setAttribute("width", "12")
-    objImgCar.setAttribute("height", "24")
     objImgCar.src = 'assets/img/Car.png';
+
     var DomCar = new H.map.DomIcon(objImgCar);
 
     var domElementFather = document.createElement('div');
@@ -94,19 +100,23 @@
     var position_latitude = route_matching_data.response.route[0].waypoint[0].mappedPosition.latitude;
     var position_longitude = route_matching_data.response.route[0].waypoint[0].mappedPosition.longitude;
 
-    var marker_location = new H.map.DomMarker({ lat: position_latitude, lng: position_longitude }, { icon: domIconCar });
+    var marker_location = new H.map.Marker({ lat: position_latitude, lng: position_longitude });
     let group = new H.map.Group();
     group.addObject(marker_location);
-    map.setZoom(17);
-    //map.setViewBounds(group.getBounds(), true);
+    map.setViewBounds(group.getBounds(), true);
 
     map.addObject(group);
     //document.getElementById('#carDomIcon').setAttribute("style","transform:rotate(40deg)")
     // $('#carDomIcon').css({"transform":"rotate("+location_data[1].angle+120+"deg)"});
 
     popFromLocationQueue();
+    var locationQueue = [];
+
 
     window.setInterval(function () {
+
+
+
         addToLocationQueue();
     }, 2000);
 
@@ -114,82 +124,58 @@
 
     function addToLocationQueue() {
         const isMapAnimated = true;
-        var position_latitude = route_matching_data.response.route[0].waypoint[0].originalPosition.latitude;
-        var position_longitude = route_matching_data.response.route[0].waypoint[0].originalPosition.longitude;
+        var position_latitude = route_matching_data.response.route[0].waypoint[0].mappedPosition.latitude;
+        var position_longitude = route_matching_data.response.route[0].waypoint[0].mappedPosition.longitude;
         var position_angle = (route_matching_data.response.route[0].waypoint[0].spot) * 100 - 10;
         console.log({ lat: position_latitude, lng: position_longitude })
         var result = [position_longitude, position_angle]
-        moveTo = [position_latitude, position_longitude]
-        console.log(marker_location.getGeometry())
-        customAnimatedMove(marker_location, .5, marker_location.getGeometry().lat, marker_location.getGeometry().lng, moveTo);
-        popFromLocationQueue();
-    }
-
-
-    function customAnimatedMove(marker, t, current_lat, current_lng, moveto) {
-        let lat = current_lat;
-        let lng = current_lng;
-        let currentLatLng = [current_lat, current_lng];
-
-        let deltalat = (moveto[0] - lat) / 100;
-        let deltalng = (moveto[1] - lng) / 100;
-        let delay = 10 * t;
-        for (let i = 0; i < 100; i++) {
-            (function (ind) {
-                setTimeout(
-                    function () {
-                        let lat = marker.getGeometry().lat;
-                        let lng = marker.getGeometry().lng;
-                        lat += deltalat;
-                        lng += deltalng;
-                        latlng = new H.geo.Point(lat, lng);
-
-                        $('#carDomIcon').css({ "transform": `rotate(+${calCBearing(currentLatLng, moveto)}deg)` });
-                        
-                        marker.setPosition(latlng,true);
-                        map.setCenter(latlng,true);
-                        
-                    }, delay * ind
-                );
-            })(i)
+moveTo =[position_latitude,position_longitude]
+console.log(marker_location.getGeometry())       
+animatedMove(marker_location, .5, marker_location.getGeometry().lat,marker_location.getGeometry().lng, moveTo)
+            route_matching_data.response.route[0].waypoint.shift()
         }
-    }
+        function animatedMove(marker, t, lat,lng, moveto) {
 
-    function calCBearing(currentLatLng, movingToLatLng) {
-        
+            console.log({lat,lng})
+            var lat =lat;
+            var lng = lng;
 
-        startLat = toRadians(currentLatLng[0]);
-  startLng = toRadians(currentLatLng[1]);
-  destLat = toRadians(movingToLatLng[0]);
-  destLng = toRadians(movingToLatLng[1]);
+            var deltalat = (moveto[0] - lat) / 100;
+            var deltalng = (moveto[1] - lng) / 100;
 
-        y = Math.sin(destLng - startLng) * Math.cos(destLat);
-        x = Math.cos(startLat) * Math.sin(destLat) -
-            Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
-        brng = Math.atan2(y, x);
-        brng = toDegrees(brng);
-        return (brng + 360) % 360;
+            var delay = 10 * t;
+            for (var i = 0; i < 100; i++) {
+                (function (ind) {
+                    setTimeout(
+                        function () {
+                            var lat = marker.getGeometry().lat;
+                            var lng = marker.getGeometry().lng;
+                            lat += deltalat;
+                            lng += deltalng;
+                            latlng = new H.geo.Point(lat, lng);
+                            marker.setPosition(latlng);
+                        }, delay * ind
+                    );
+                })(i)
+            }
+        }
+        function popFromLocationQueue() {
+            if (route_matching_data.response.route[0].waypoint > 0)
+                route_matching_data.response.route[0].waypoint.shift();
 
-    }
 
-    function popFromLocationQueue() {
-        if (route_matching_data.response.route[0].waypoint.length > 0) {
-            route_matching_data.response.route[0].waypoint.shift();
-        } else {
-            return null
+            if (route_matching_data > 0) {
+
+
+                return route_matching_data.TracePoints.splice(1, 2)[0];
+            }
+            else
+                return null;
         }
 
-    }
-    // Converts from degrees to radians.
-    function toRadians(degrees) {
-        return degrees * Math.PI / 180;
-    };
+        function addMarkersToMap() {
 
-    // Converts from radians to degrees.
-    function toDegrees(radians) {
-        return radians * 180 / Math.PI;
-    }
-
+        }
 </script>
 </body>
 
