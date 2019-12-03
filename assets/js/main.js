@@ -76,12 +76,12 @@ function show_tracking(){
                         lat += deltalat;
                         lng += deltalng;
                         latlng = new H.geo.Point(lat, lng);
-                        
+                        addPolylineToMap(map,moveTo);
                         $('#carDomIcon').css({ //calling calCBearing func to get the angle of the car
                             "transform": `rotate(+${calCBearing(currentLatLng, moveto)}deg)`
                         });
 
-                        marker.setPosition(latlng);
+                       // marker.setPosition(latlng);
                         map.setCenter(latlng, true);
                         
 
